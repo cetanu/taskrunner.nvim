@@ -82,30 +82,37 @@ local function display(tasks)
 	local height = #lines
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":close<CR>", { noremap = true, silent = true })
-	if #tasks > 0 then
-		vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
-			noremap = true,
-			silent = true,
-			callback = function()
-				local line_nr = vim.api.nvim_win_get_cursor(0)[1]
-				local task = tasks[line_nr]
-				local win_opts = {
-					relative = "editor",
-					width = width,
-					height = height,
-					col = (vim.o.columns - width) / 2,
-					row = (vim.o.lines - height) / 2,
-					style = "minimal",
-					border = "rounded",
-					title = "Task Runner",
-				}
-				local win = vim.api.nvim_open_win(buf, true, win_opts)
-				vim.api.nvim_win_close(win, true)
-				run_task(task)
-			end,
-		})
+
+	local win_opts = {
+		relative = "editor",
+		width = width,
+		height = height,
+		col = (vim.o.columns - width) / 2,
+		row = (vim.o.lines - height) / 2,
+		style = "minimal",
+		border = "rounded",
+		title = "Task Runner",
+	}
+	local win = vim.api.nvim_open_win(buf, true, win_opts)
+
+	local function setup_keymaps()
+		vim.api.nvim_buf_set_keymap(buf, "n", "q", ":close<CR>", { noremap = true, silent = true })
+
+		if #tasks > 0 then
+			vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
+				noremap = true,
+				silent = true,
+				callback = function()
+					local line_nr = vim.api.nvim_win_get_cursor(0)[1]
+					local task = tasks[line_nr]
+					vim.api.nvim_win_close(win, true)
+					run_task(task)
+				end,
+			})
+		end
 	end
+
+	setup_keymaps()
 end
 
 function M.setup(opts)
