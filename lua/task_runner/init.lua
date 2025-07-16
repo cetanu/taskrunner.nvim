@@ -60,8 +60,7 @@ end
 
 local function run_task(task)
 	local cmd = task.file_type .. " " .. task.name
-	vim.cmd("new | term " .. cmd)
-	local win_id = vim.api.nvim_get_current_win()
+	local buf = vim.api.nvim_create_buf(false, true)
 	local width = 120
 	local height = 40
 	local win_opts = {
@@ -72,10 +71,12 @@ local function run_task(task)
 		row = (vim.o.lines - height) / 2,
 		style = "minimal",
 		border = "rounded",
-		title = "Task Runner",
+		title = " Task Runner ",
+		title_pos = "center",
 	}
-	vim.api.nvim_win_set_config(win_id, win_opts)
-	vim.api.nvim_buf_set_keymap(0, "t", "<Esc>", "<C-\\><C-n>:q!<CR>", { noremap = true, silent = true })
+	local _ = vim.api.nvim_open_win(buf, true, win_opts)
+	vim.fn.termopen(cmd)
+	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q", { noremap = true, silent = false })
 end
 
 local function display(tasks)
@@ -104,9 +105,6 @@ local function display(tasks)
 		title = "Task Runner",
 	}
 	local win = vim.api.nvim_open_win(buf, true, win_opts)
-
-	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":close<CR>", { noremap = true, silent = true })
-	vim.api.nvim_buf_set_keymap(buf, "n", "<ESC>", ":close<CR>", { noremap = true, silent = true })
 
 	if #tasks > 0 then
 		vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
