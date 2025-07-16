@@ -76,7 +76,7 @@ local function run_task(task)
 	}
 	local _ = vim.api.nvim_open_win(buf, true, win_opts)
 	vim.fn.termopen(cmd)
-	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q", { noremap = true, silent = false })
+	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q<CR>", { noremap = true, silent = true })
 end
 
 local function display(tasks)
