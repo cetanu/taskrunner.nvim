@@ -144,4 +144,6 @@ function M.run()
 	display(tasks)
 end
 
+M.run_task = run_task
+
 return M
