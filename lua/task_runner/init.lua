@@ -1,7 +1,6 @@
 local M = {}
 
 local config = {
-	term_command = "split",
 	providers = {
 		make = true,
 		just = true,
@@ -61,11 +60,22 @@ end
 
 local function run_task(task)
 	local cmd = task.file_type .. " " .. task.name
-	local term_command = config.term_command .. " term://" .. cmd
-	local ok, err = pcall(vim.cmd, term_command)
-	if not ok then
-		print("Error running task: " .. err)
-	end
+	vim.cmd("new | term " .. cmd)
+	local win_id = vim.api.nvim_get_current_win()
+	local width = 120
+	local height = 40
+	local win_opts = {
+		relative = "editor",
+		width = width,
+		height = height,
+		col = (vim.o.columns - width) / 2,
+		row = (vim.o.lines - height) / 2,
+		style = "minimal",
+		border = "rounded",
+		title = "Task Runner",
+	}
+	vim.api.nvim_win_set_config(win_id, win_opts)
+	vim.api.nvim_buf_set_keymap(0, "t", "<Esc>", "<C-\\><C-n>:q!<CR>", { noremap = true, silent = true })
 end
 
 local function display(tasks)
@@ -96,6 +106,7 @@ local function display(tasks)
 	local win = vim.api.nvim_open_win(buf, true, win_opts)
 
 	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":close<CR>", { noremap = true, silent = true })
+	vim.api.nvim_buf_set_keymap(buf, "n", "<ESC>", ":close<CR>", { noremap = true, silent = true })
 
 	if #tasks > 0 then
 		vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
