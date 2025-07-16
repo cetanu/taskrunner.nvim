@@ -6,6 +6,7 @@ local config = {
 		just = true,
 		rake = true,
 		invoke = true,
+		cargo = true,
 	},
 }
 
