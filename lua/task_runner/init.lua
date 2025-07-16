@@ -60,8 +60,6 @@ local function parse_tasks(task_files)
 end
 
 local function run_task(task)
-	local cmd = task.file_type .. " " .. task.name
-	local buf = vim.api.nvim_create_buf(false, true)
 	local width = 120
 	local height = 40
 	local win_opts = {
@@ -72,13 +70,14 @@ local function run_task(task)
 		row = (vim.o.lines - height) / 2,
 		style = "minimal",
 		border = "rounded",
-		title = " Task Runner ",
-		title_pos = "center",
+		title = " Task Output ",
 	}
-	local _ = vim.api.nvim_open_win(buf, true, win_opts)
-	vim.fn.termopen(cmd)
+	local cmd = task.file_type .. " " .. task.name
+	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":q<CR>", { noremap = true, silent = true })
+	local _ = vim.api.nvim_open_win(buf, true, win_opts)
+	vim.fn.termopen(cmd)
 end
 
 local function display(tasks)
@@ -87,13 +86,15 @@ local function display(tasks)
 		table.insert(lines, "No tasks found.")
 	else
 		for _, task in ipairs(tasks) do
-			table.insert(lines, string.format("%-20s (%s)", task.name, task.file_type))
+			table.insert(lines, string.format("[%s] %-20s", task.file_type, task.name))
 		end
 	end
 
 	local width = 50
 	local height = #lines
 	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q<CR>", { noremap = true, silent = true })
+	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
 	local win_opts = {
