@@ -13,17 +13,13 @@ local config = {
 local providers = {}
 
 local function load_providers()
-	local provider_files = vim.fn.globpath("lua/task_runner/providers", "*.lua", false, true)
-	for _, file_path in ipairs(provider_files) do
-		local provider_name = vim.fn.fnamemodify(file_path, ":t:r")
-		if config.providers[provider_name] then
-			local ok, provider = pcall(require, "task_runner.providers." .. provider_name)
-			if ok then
-				provider.name = provider_name
-				table.insert(providers, provider)
-			else
-				print("Error loading provider '" .. provider_name .. "': " .. provider)
-			end
+	for provider_name, _ in pairs(config.providers) do
+		local ok, provider = pcall(require, "task_runner.providers." .. provider_name)
+		if ok then
+			provider.name = provider_name
+			table.insert(providers, provider)
+		else
+			print("Error loading provider '" .. provider_name .. "': " .. provider)
 		end
 	end
 end
@@ -97,9 +93,9 @@ local function display(tasks)
 	end
 
 	local width = 50
-	local height = math.max(#lines, 1)  -- Ensure minimum height of 1
+	local height = math.max(#lines, 1) -- Ensure minimum height of 1
 	local buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')  -- Clean up buffer when hidden
+	vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe") -- Clean up buffer when hidden
 	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
