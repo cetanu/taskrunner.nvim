@@ -30,7 +30,7 @@ end
 
 local function find_root()
 	local git_root = vim.fn.fnamemodify(vim.fn.finddir(".git", ";"), ":h")
-	if git_root ~= "" then
+	if git_root ~= "" and git_root ~= "." then
 		return git_root
 	else
 		-- Fall back to current working directory if no git repo found
@@ -97,8 +97,9 @@ local function display(tasks)
 	end
 
 	local width = 50
-	local height = #lines
+	local height = math.max(#lines, 1)  -- Ensure minimum height of 1
 	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')  -- Clean up buffer when hidden
 	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -143,7 +144,17 @@ function M.run()
 
 	local files = find_tasks(root)
 	if #files == 0 then
-		print("No task files found.")
+		local provider_patterns = {}
+		for _, provider in ipairs(providers) do
+			table.insert(provider_patterns, provider.file_pattern)
+		end
+		local debug_msg = string.format(
+			"No task files found.\nRoot: %s\nLooking for: %s\nProviders loaded: %d",
+			root,
+			table.concat(provider_patterns, ", "),
+			#providers
+		)
+		vim.notify(debug_msg, vim.log.levels.WARN)
 		return
 	end
 
