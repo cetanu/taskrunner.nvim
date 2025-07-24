@@ -29,7 +29,13 @@ local function load_providers()
 end
 
 local function find_root()
-	return vim.fn.fnamemodify(vim.fn.finddir(".git", ";"), ":h")
+	local git_root = vim.fn.fnamemodify(vim.fn.finddir(".git", ";"), ":h")
+	if git_root ~= "" then
+		return git_root
+	else
+		-- Fall back to current working directory if no git repo found
+		return vim.fn.getcwd()
+	end
 end
 
 local function find_tasks(root)
