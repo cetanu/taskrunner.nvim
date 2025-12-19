@@ -87,12 +87,21 @@ local function display(tasks)
 	if #tasks == 0 then
 		table.insert(lines, "No tasks found.")
 	else
-		for _, task in ipairs(tasks) do
-			table.insert(lines, string.format("[%s] %-20s", task.file_type, task.name))
+		for i, task in ipairs(tasks) do
+			-- Generate key label: 1-9, then a-z for tasks beyond 9
+			local key_label
+			if i <= 9 then
+				key_label = tostring(i)
+			elseif i <= 35 then
+				key_label = string.char(string.byte('a') + i - 10)
+			else
+				key_label = "·" -- bullet point for tasks beyond z
+			end
+			table.insert(lines, string.format("%s [%s] %-20s", key_label, task.file_type, task.name))
 		end
 	end
 
-	local width = 50
+	local width = 60 -- Increased width to accommodate numbers
 	local height = math.max(#lines, 1) -- Ensure minimum height of 1
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe") -- Clean up buffer when hidden
@@ -113,6 +122,7 @@ local function display(tasks)
 	local win = vim.api.nvim_open_win(buf, true, win_opts)
 
 	if #tasks > 0 then
+		-- Keep the original Enter key binding for cursor-based selection
 		vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
 			noremap = true,
 			silent = true,
@@ -123,6 +133,27 @@ local function display(tasks)
 				run_task(task)
 			end,
 		})
+
+		-- Add numbered key bindings for direct task execution
+		for i, task in ipairs(tasks) do
+			local key
+			if i <= 9 then
+				key = tostring(i)
+			elseif i <= 35 then
+				key = string.char(string.byte('a') + i - 10)
+			else
+				break -- Don't create bindings for tasks beyond 'z'
+			end
+
+			vim.api.nvim_buf_set_keymap(buf, "n", key, "", {
+				noremap = true,
+				silent = true,
+				callback = function()
+					vim.api.nvim_win_close(win, true)
+					run_task(task)
+				end,
+			})
+		end
 	end
 end
 
