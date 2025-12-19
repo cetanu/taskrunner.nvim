@@ -78,8 +78,12 @@ local function run_task(task)
 	local buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", ":q<CR>", { noremap = true, silent = true })
 	vim.api.nvim_buf_set_keymap(buf, "n", "q", ":q<CR>", { noremap = true, silent = true })
-	local _ = vim.api.nvim_open_win(buf, true, win_opts)
+	local win = vim.api.nvim_open_win(buf, true, win_opts)
 	vim.fn.termopen(cmd)
+	-- Position cursor at the bottom and follow output
+	vim.api.nvim_win_call(win, function()
+		vim.cmd("normal! G")
+	end)
 end
 
 local function display(tasks)
