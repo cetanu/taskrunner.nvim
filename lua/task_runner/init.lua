@@ -88,15 +88,8 @@ local function display(tasks)
 		table.insert(lines, "No tasks found.")
 	else
 		for i, task in ipairs(tasks) do
-			-- Generate key label: 1-9, then a-z for tasks beyond 9
-			local key_label
-			if i <= 9 then
-				key_label = tostring(i)
-			elseif i <= 35 then
-				key_label = string.char(string.byte('a') + i - 10)
-			else
-				key_label = "·" -- bullet point for tasks beyond z
-			end
+			-- Generate numeric key label for display
+			local key_label = tostring(i)
 			table.insert(lines, string.format("%s [%s] %-20s", key_label, task.file_type, task.name))
 		end
 	end
@@ -134,17 +127,10 @@ local function display(tasks)
 			end,
 		})
 
-		-- Add numbered key bindings for direct task execution
+		-- Add numeric keybindings for direct task execution
+		-- Users type the task number (e.g., "1" for task 1, "1" "0" for task 10)
 		for i, task in ipairs(tasks) do
-			local key
-			if i <= 9 then
-				key = tostring(i)
-			elseif i <= 35 then
-				key = string.char(string.byte('a') + i - 10)
-			else
-				break -- Don't create bindings for tasks beyond 'z'
-			end
-
+			local key = tostring(i)
 			vim.api.nvim_buf_set_keymap(buf, "n", key, "", {
 				noremap = true,
 				silent = true,

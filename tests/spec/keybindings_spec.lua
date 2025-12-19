@@ -1,36 +1,23 @@
--- Helper function to generate keybindings for tasks (extracted from main logic)
--- This mirrors the logic in lua/task_runner/init.lua display() function lines 137-155
+-- Helper function to generate numeric keybindings for tasks (extracted from main logic)
+-- This mirrors the logic in lua/task_runner/init.lua display() function
+-- Now uses numeric-only keybindings (1, 2, 3, ... 10, 11, ...)
 local function generate_keybindings(tasks)
 	local keybindings = {}
 	for i, task in ipairs(tasks) do
-		local key
-		if i <= 9 then
-			key = tostring(i)
-		elseif i <= 35 then
-			key = string.char(string.byte('a') + i - 10)
-		else
-			break -- Don't create bindings for tasks beyond 'z'
-		end
+		local key = tostring(i)
 		table.insert(keybindings, { key = key, task = task })
 	end
 	return keybindings
 end
 
--- Helper function to generate key labels for display (mirrors lines 91-98)
+-- Helper function to generate numeric key labels for display
+-- This mirrors the logic in lua/task_runner/init.lua display() function
 local function generate_key_label(i)
-	local key_label
-	if i <= 9 then
-		key_label = tostring(i)
-	elseif i <= 35 then
-		key_label = string.char(string.byte('a') + i - 10)
-	else
-		key_label = "·" -- bullet point for tasks beyond z
-	end
-	return key_label
+	return tostring(i)
 end
 
 describe("task_runner keybindings", function()
-	it("creates numeric keybindings 1-9 for first 9 tasks", function()
+	it("creates numeric keybindings for all tasks", function()
 		local tasks = {
 			{ name = "task1", file_type = "make" },
 			{ name = "task2", file_type = "make" },
@@ -52,38 +39,40 @@ describe("task_runner keybindings", function()
 		end
 	end)
 
-	it("creates alphabetic keybindings a-z for tasks 10-35", function()
+	it("creates numeric keybindings for tasks beyond 9", function()
 		local tasks = {}
-		for i = 1, 35 do
+		for i = 1, 50 do
 			table.insert(tasks, { name = "task" .. i, file_type = "make" })
 		end
 
 		local keybindings = generate_keybindings(tasks)
 
-		assert.are.equal(35, #keybindings)
+		-- All 50 tasks should have numeric keybindings
+		assert.are.equal(50, #keybindings)
 
-		-- First 9 should be numeric
+		-- First 9 should be 1-9
 		for i = 1, 9 do
 			assert.are.equal(tostring(i), keybindings[i].key)
 		end
 
-		-- Next 26 should be a-z
-		for i = 10, 35 do
-			local expected_key = string.char(string.byte('a') + i - 10)
-			assert.are.equal(expected_key, keybindings[i].key)
+		-- Next tasks should be 10, 11, 12, ...
+		for i = 10, 50 do
+			assert.are.equal(tostring(i), keybindings[i].key)
 		end
 	end)
 
-	it("does not create keybindings for tasks beyond 35", function()
+	it("creates keybindings for unlimited number of tasks", function()
 		local tasks = {}
-		for i = 1, 40 do
+		for i = 1, 100 do
 			table.insert(tasks, { name = "task" .. i, file_type = "make" })
 		end
 
 		local keybindings = generate_keybindings(tasks)
 
-		assert.are.equal(35, #keybindings)
-		assert.are.equal("z", keybindings[35].key)
+		-- All 100 tasks should have numeric keybindings
+		assert.are.equal(100, #keybindings)
+		assert.are.equal("1", keybindings[1].key)
+		assert.are.equal("100", keybindings[100].key)
 	end)
 
 	it("correctly maps keybindings to tasks", function()
@@ -129,7 +118,7 @@ describe("task_runner keybindings", function()
 		assert.are.equal(0, #keybindings)
 	end)
 
-	it("transitions correctly from numeric to alphabetic keys at position 10", function()
+	it("transitions correctly to double-digit keys at position 10", function()
 		local tasks = {}
 		for i = 1, 12 do
 			table.insert(tasks, { name = "task" .. i, file_type = "make" })
@@ -138,70 +127,75 @@ describe("task_runner keybindings", function()
 		local keybindings = generate_keybindings(tasks)
 
 		assert.are.equal("9", keybindings[9].key)
-		assert.are.equal("a", keybindings[10].key)
-		assert.are.equal("b", keybindings[11].key)
-		assert.are.equal("c", keybindings[12].key)
+		assert.are.equal("10", keybindings[10].key)
+		assert.are.equal("11", keybindings[11].key)
+		assert.are.equal("12", keybindings[12].key)
 	end)
 
-	it("generates correct key labels for display", function()
-		-- Test numeric labels
+	it("generates correct numeric key labels for display", function()
+		-- Test numeric labels for single digits
 		for i = 1, 9 do
 			assert.are.equal(tostring(i), generate_key_label(i))
 		end
 
-		-- Test alphabetic labels
-		for i = 10, 35 do
-			local expected = string.char(string.byte('a') + i - 10)
-			assert.are.equal(expected, generate_key_label(i))
+		-- Test numeric labels for double digits
+		for i = 10, 20 do
+			assert.are.equal(tostring(i), generate_key_label(i))
 		end
 
-		-- Test bullet point for tasks beyond z
-		assert.are.equal("·", generate_key_label(36))
-		assert.are.equal("·", generate_key_label(100))
+		-- Test numeric labels for large numbers
+		assert.are.equal("99", generate_key_label(99))
+		assert.are.equal("100", generate_key_label(100))
+		assert.are.equal("1000", generate_key_label(1000))
 	end)
 
-	it("correctly maps all 26 alphabetic keys from a-z", function()
-		local expected_keys = {
-			"a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
-			"k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
-			"u", "v", "w", "x", "y", "z"
-		}
-
-		for i = 10, 35 do
-			local expected_key = expected_keys[i - 9]
-			assert.are.equal(expected_key, generate_key_label(i))
-		end
-	end)
-
-	it("creates exactly 35 keybindings for 35 tasks (1-9, a-z)", function()
+	it("maps numeric keys sequentially for many tasks", function()
 		local tasks = {}
-		for i = 1, 35 do
+		for i = 1, 100 do
 			table.insert(tasks, { name = "task" .. i, file_type = "make" })
 		end
 
 		local keybindings = generate_keybindings(tasks)
 
-		assert.are.equal(35, #keybindings)
+		-- Verify sequential numeric mapping
+		for i = 1, 100 do
+			assert.are.equal(tostring(i), keybindings[i].key)
+			assert.are.equal("task" .. i, keybindings[i].task.name)
+		end
+	end)
+
+	it("creates numeric keybindings without gaps or limits", function()
+		local tasks = {}
+		for i = 1, 50 do
+			table.insert(tasks, { name = "task" .. i, file_type = "make" })
+		end
+
+		local keybindings = generate_keybindings(tasks)
+
+		assert.are.equal(50, #keybindings)
 		assert.are.equal("1", keybindings[1].key)
-		assert.are.equal("z", keybindings[35].key)
+		assert.are.equal("10", keybindings[10].key)
+		assert.are.equal("25", keybindings[25].key)
+		assert.are.equal("50", keybindings[50].key)
 	end)
 
-	it("respects the boundary between numeric and alphabetic at exactly position 10", function()
+	it("handles task 10 correctly at the double-digit boundary", function()
 		local tasks = {}
-		for i = 1, 11 do
+		for i = 1, 12 do
 			table.insert(tasks, { name = "task" .. i, file_type = "make" })
 		end
 
 		local keybindings = generate_keybindings(tasks)
 
-		-- Verify the exact boundary
+		-- Verify single-digit tasks
 		assert.are.equal("9", keybindings[9].key)
-		assert.are.equal("a", keybindings[10].key)
-		assert.are.equal("b", keybindings[11].key)
-
-		-- Verify they map to correct tasks
 		assert.are.equal("task9", keybindings[9].task.name)
+
+		-- Verify transition to double digits
+		assert.are.equal("10", keybindings[10].key)
 		assert.are.equal("task10", keybindings[10].task.name)
+
+		assert.are.equal("11", keybindings[11].key)
 		assert.are.equal("task11", keybindings[11].task.name)
 	end)
 end)
