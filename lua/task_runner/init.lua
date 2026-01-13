@@ -8,6 +8,7 @@ local config = {
 		invoke = true,
 		cargo = true,
 	},
+	provider_order = { "make", "just", "rake", "invoke", "cargo" },
 }
 
 local providers = {}
@@ -58,6 +59,23 @@ local function parse_tasks(task_files)
 			print("Error parsing with provider '" .. provider.name .. "': " .. parsed_tasks)
 		end
 	end
+	return tasks
+end
+
+local function sort_tasks_by_provider(tasks)
+	-- Create a lookup table for provider order
+	local order_map = {}
+	for index, provider_name in ipairs(config.provider_order) do
+		order_map[provider_name] = index
+	end
+
+	-- Sort tasks based on provider order
+	table.sort(tasks, function(a, b)
+		local order_a = order_map[a.file_type] or 9999
+		local order_b = order_map[b.file_type] or 9999
+		return order_a < order_b
+	end)
+
 	return tasks
 end
 
@@ -176,9 +194,11 @@ function M.run()
 	end
 
 	local tasks = parse_tasks(files)
+	tasks = sort_tasks_by_provider(tasks)
 	display(tasks)
 end
 
 M.run_task = run_task
+M._sort_tasks_by_provider = sort_tasks_by_provider -- Exposed for testing
 
 return M
