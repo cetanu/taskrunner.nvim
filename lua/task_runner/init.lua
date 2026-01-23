@@ -115,12 +115,14 @@ end
 
 local function display(tasks)
 	local lines = {}
+	local key_lengths = {}
 	if #tasks == 0 then
 		table.insert(lines, "No tasks found.")
 	else
 		for i, task in ipairs(tasks) do
 			-- Generate numeric key label for display
 			local key_label = tostring(i)
+			key_lengths[i] = #key_label
 			table.insert(lines, string.format("%s [%s] %-20s", key_label, task.file_type, task.name))
 		end
 	end
@@ -146,6 +148,11 @@ local function display(tasks)
 	local win = vim.api.nvim_open_win(buf, true, win_opts)
 
 	if #tasks > 0 then
+		for i, _ in ipairs(tasks) do
+			local hl_group = (i % 2 == 0) and "TaskRunnerIndexEven" or "TaskRunnerIndexOdd"
+			vim.api.nvim_buf_add_highlight(buf, -1, hl_group, i - 1, 0, key_lengths[i] or 0)
+		end
+
 		-- Keep the original Enter key binding for cursor-based selection
 		vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
 			noremap = true,
