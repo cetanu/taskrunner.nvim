@@ -14,7 +14,33 @@ local config = {
 local providers = {}
 
 local function load_providers()
-	for provider_name, _ in pairs(config.providers) do
+	providers = {}
+	local ordered_names = {}
+	local enabled = {}
+
+	for provider_name, is_enabled in pairs(config.providers) do
+		if is_enabled then
+			enabled[provider_name] = true
+		end
+	end
+
+	for _, provider_name in ipairs(config.provider_order or {}) do
+		if enabled[provider_name] then
+			table.insert(ordered_names, provider_name)
+			enabled[provider_name] = nil
+		end
+	end
+
+	local remaining = {}
+	for provider_name, _ in pairs(enabled) do
+		table.insert(remaining, provider_name)
+	end
+	table.sort(remaining)
+	for _, provider_name in ipairs(remaining) do
+		table.insert(ordered_names, provider_name)
+	end
+
+	for _, provider_name in ipairs(ordered_names) do
 		local ok, provider = pcall(require, "task_runner.providers." .. provider_name)
 		if ok then
 			provider.name = provider_name
@@ -59,23 +85,6 @@ local function parse_tasks(task_files)
 			print("Error parsing with provider '" .. provider.name .. "': " .. parsed_tasks)
 		end
 	end
-	return tasks
-end
-
-local function sort_tasks_by_provider(tasks)
-	-- Create a lookup table for provider order
-	local order_map = {}
-	for index, provider_name in ipairs(config.provider_order) do
-		order_map[provider_name] = index
-	end
-
-	-- Sort tasks based on provider order
-	table.sort(tasks, function(a, b)
-		local order_a = order_map[a.file_type] or 9999
-		local order_b = order_map[b.file_type] or 9999
-		return order_a < order_b
-	end)
-
 	return tasks
 end
 
@@ -194,11 +203,9 @@ function M.run()
 	end
 
 	local tasks = parse_tasks(files)
-	tasks = sort_tasks_by_provider(tasks)
 	display(tasks)
 end
 
 M.run_task = run_task
-M._sort_tasks_by_provider = sort_tasks_by_provider -- Exposed for testing
 
 return M
