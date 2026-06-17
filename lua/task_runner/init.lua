@@ -7,8 +7,9 @@ local config = {
 		rake = true,
 		invoke = true,
 		cargo = true,
+		mise = true,
 	},
-	provider_order = { "make", "just", "rake", "invoke", "cargo" },
+	provider_order = { "make", "just", "rake", "invoke", "cargo", "mise" },
 }
 
 local providers = {}
@@ -64,9 +65,12 @@ end
 local function find_tasks(root)
 	local files = {}
 	for _, provider in ipairs(providers) do
-		local file_path = root .. "/" .. provider.file_pattern
-		if vim.fn.filereadable(file_path) == 1 then
-			table.insert(files, { path = file_path, provider = provider })
+		local patterns = type(provider.file_pattern) == "table" and provider.file_pattern or { provider.file_pattern }
+		for _, pattern in ipairs(patterns) do
+			local file_path = root .. "/" .. pattern
+			if vim.fn.filereadable(file_path) == 1 then
+				table.insert(files, { path = file_path, provider = provider })
+			end
 		end
 	end
 	return files
@@ -197,7 +201,13 @@ function M.run()
 	if #files == 0 then
 		local provider_patterns = {}
 		for _, provider in ipairs(providers) do
-			table.insert(provider_patterns, provider.file_pattern)
+			if type(provider.file_pattern) == "table" then
+				for _, pattern in ipairs(provider.file_pattern) do
+					table.insert(provider_patterns, pattern)
+				end
+			else
+				table.insert(provider_patterns, provider.file_pattern)
+			end
 		end
 		local debug_msg = string.format(
 			"No task files found.\nRoot: %s\nLooking for: %s\nProviders loaded: %d",
